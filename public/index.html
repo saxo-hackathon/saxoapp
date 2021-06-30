@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/images/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Web site created using create-react-app" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+   
+    <title>Saxo App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+  <script>
+		(async () => {
+			if ('serviceWorker' in navigator) {
+				// We first get the registration
+				const registration = await navigator.serviceWorker.ready;
+				console.log(registration);
+				// Asking for the subscription object
+				let subscription = await registration.pushManager.getSubscription();
+
+				// If we don't have a subscription we have to create and register it!
+				console.log(subscription);
+				if (!subscription) {
+					subscription = await subscribe(registration);
+				}
+				//  Implementing an unsubscribe button
+				// document.getElementById('unsubscribe').onclick = () => unsubscribe();
+			}
+		})();
+
+		// We use this function to subscribe to our push notifications
+		const subscribe = async registration => {
+			// First get a public key from our Express server
+			const response = await fetch('api/push/vapid-public-key');
+			const body = await response.json();
+			const publicKey = body.publicKey;
+
+			
+			//we have to turn our public key into a Uint8Array
+			const Uint8ArrayPublicKey = urlBase64ToUint8Array(publicKey);
+
+			// registering a new subscription to our service worker's Push manager
+			const subscription = await registration.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: Uint8ArrayPublicKey
+			});
+
+			// Sending the subscription object to our Express server
+			await fetch('api/push/subscribe', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(subscription.toJSON())
+			});
+			return subscription;
+		};
+
+		const unsubscribe = async () => {
+			const registration = await navigator.serviceWorker.ready;
+			const subscription = await registration.pushManager.getSubscription();
+
+			// This tells our browser that we want to unsubscribe
+			await subscription.unsubscribe();
+
+			// This tells our Express server that we want to unsubscribe
+			await fetch('api/push/unsubscribe', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(subscription.toJSON())
+			});
+			writeSubscriptionStatus('Unsubscribed');
+		};
+
+		// This simply shows our user that they are unsubscribed
+		const writeSubscriptionStatus = subscriptionStatus => {
+			document.getElementById('status').innerHTML = subscriptionStatus;
+		};
+
+    const urlBase64ToUint8Array = base64String => {
+			const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+			const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+
+			const rawData = window.atob(base64);
+			const outputArray = new Uint8Array(rawData.length);
+
+			for (let i = 0; i < rawData.length; ++i) {
+				outputArray[i] = rawData.charCodeAt(i);
+			}
+			return outputArray;
+		};
+	</script>
+</html>

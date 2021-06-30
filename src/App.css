@@ -1,0 +1,47 @@
+.appHeader {
+  background-color: #282c34;
+  height: 40px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.appLogo {
+  height: 30px;
+  margin: 0 10px;
+}
+
+.card {
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  background: antiquewhite;
+  width: 600px;
+  align-items: center;
+}
+.card > span {
+  margin: 10px;
+  font-size: x-large;
+  font-weight: 500;
+}
+
+.stock {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  font-weight: 600;
+  background: darkkhaki;
+}
+
+.button {
+  background: lightgray;
+  padding: 5px;
+  margin: 5px;
+  border-radius: 10px;
+  cursor: pointer;
+}
